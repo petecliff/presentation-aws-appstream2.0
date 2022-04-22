@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A VPN for the lolz
+
+Parameters:
+  VpcStackName:
+    Type: String
+
+  Namespace:
+    Type: String
+
+  CustomerGatewayIpAddress:
+    Type: String
+
+Resources:
+  CustomerGateway:
+    Type: AWS::EC2::CustomerGateway
+    Properties:
+      BgpAsn: 65016
+      IpAddress: !Ref CustomerGatewayIpAddress
+      Type: "ipsec.1"
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-cgw"
+
+  S2SVpn:
+    Type: AWS::EC2::VPNConnection
+    Properties:
+      CustomerGatewayId: !Ref CustomerGateway
+      StaticRoutesOnly: false
+      TransitGatewayId: 
+        !ImportValue
+        'Fn::Sub': '${VpcStackName}-tgw' 
+      Type: "ipsec.1"
+
+      
+  

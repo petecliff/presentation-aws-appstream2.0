@@ -1,0 +1,580 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A VPC over three AZs
+
+Parameters:
+  Namespace:
+    Type: String
+
+Resources:
+  # TransitGateway:
+  #   Type: AWS::EC2::TransitGateway
+  #   Properties:
+  #     AmazonSideAsn: 64512
+  #     Description: !Sub "${Namespace}-tgw"
+  #     DefaultRouteTableAssociation: "enable"
+  #     DnsSupport: "enable"
+  #     VpnEcmpSupport: "enable"      
+
+  WorkshopVPC:  
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.25.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: 
+        - Key: Name
+          Value: !Sub "${Namespace}-workshop-vpc"
+        - Key: Project
+          Value: "GO Workshop"
+
+  SharedVPC:  
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: 10.26.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: 
+        - Key: Name
+          Value: !Sub "${Namespace}-shared-vpc"
+        - Key: Project
+          Value: "GO Workshop"
+
+  # TGW2WorkshopVPC:
+  #   Type: AWS::EC2::TransitGatewayAttachment
+  #   Properties: 
+  #     SubnetIds: 
+  #       - !Ref PrivateSubnet0
+  #       - !Ref PrivateSubnet1
+  #       - !Ref PrivateSubnet2
+  #     Tags: 
+  #       - Key: Name
+  #         Value: WorkshopToTGW
+  #     TransitGatewayId: !Ref TransitGateway
+  #     VpcId: !Ref WorkshopVPC       
+
+  # TGW2SharedVPC:
+  #   Type: AWS::EC2::TransitGatewayAttachment
+  #   Properties: 
+  #     SubnetIds: 
+  #       - !Ref SharedPrivateSubnet0
+  #       - !Ref SharedPrivateSubnet1
+  #     Tags: 
+  #       - Key: Name
+  #         Value: SharedToTGW
+  #     TransitGatewayId: !Ref TransitGateway
+  #     VpcId: !Ref SharedVPC              
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Project
+          Value: "GO Workshop"
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref WorkshopVPC
+
+  SharedPrivateSubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.26.0.0/20
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref SharedVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-shared-private-a"
+        - Key: Project
+          Value: "GO Workshop"
+
+  SharedPrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.26.16.0/20
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref SharedVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-shared-private-b"
+        - Key: Project
+          Value: "GO Workshop"
+
+  PublicSubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.25.0.0/20
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref WorkshopVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-public-a"
+        - Key: Project
+          Value: "GO Workshop"
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.25.16.0/20
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref WorkshopVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-public-b"
+        - Key: Project
+          Value: "GO Workshop"
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 2
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.25.32.0/20
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref WorkshopVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-public-c"
+        - Key: Project
+          Value: "GO Workshop"
+
+  PrivateSubnet0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 0
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.25.48.0/20
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref WorkshopVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-private-a"
+        - Key: Project
+          Value: "GO Workshop"
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 1
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.25.64.0/20
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref WorkshopVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-private-b"
+        - Key: Project
+          Value: "GO Workshop"
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 2
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      CidrBlock: 10.25.80.0/20
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref WorkshopVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-private-c"
+        - Key: Project
+          Value: "GO Workshop"
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WorkshopVPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRouteTableAssociation0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet0
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  
+  PublicRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  # TransitGatewayToWorkshopForInternet:
+  #   Type: AWS::EC2::TransitGatewayRoute
+  #   Properties:
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     TransitGatewayAttachementId: !
+
+  NATEIP0:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-nat-0-eip"
+    
+  NATGW0:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NATEIP0.AllocationId
+      SubnetId: !Ref PublicSubnet0
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-nat-gw-0"
+
+  SharedPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SharedVPC
+
+  # SharedOnPremRoute0:
+  #   Type: AWS::EC2::Route
+  #   DependsOn: TGW2SharedVPC
+  #   Properties:
+  #     DestinationCidrBlock: 192.168.8.0/21
+  #     TransitGatewayId: !Ref TransitGateway
+  #     RouteTableId: !Ref SharedPrivateRouteTable
+
+  # Shared2WorkshopRoute0:
+  #   Type: AWS::EC2::Route
+  #   DependsOn: TGW2SharedVPC
+  #   Properties:
+  #     DestinationCidrBlock: 10.25.0.0/16
+  #     TransitGatewayId: !Ref TransitGateway
+  #     RouteTableId: !Ref SharedPrivateRouteTable
+
+  SharedRouteTableAssociation0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SharedPrivateSubnet0
+      RouteTableId: !Ref SharedPrivateRouteTable
+
+  SharedRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SharedPrivateSubnet1
+      RouteTableId: !Ref SharedPrivateRouteTable
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WorkshopVPC
+
+  PrivateNATRoute0:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGW0
+      RouteTableId: !Ref PrivateRouteTable
+
+  # SharedNATRoute0:
+  #   Type: AWS::EC2::Route
+  #   Properties:
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     TransitGatewayId: !Ref TransitGateway
+  #     RouteTableId: !Ref SharedPrivateRouteTable
+
+  # PrivateOnPremRoute0:
+  #   Type: AWS::EC2::Route
+  #   DependsOn: TGW2WorkshopVPC
+  #   Properties:
+  #     DestinationCidrBlock: 192.168.8.0/21
+  #     TransitGatewayId: !Ref TransitGateway
+  #     RouteTableId: !Ref PrivateRouteTable
+
+  # Private2SharedRoute0:
+  #   Type: AWS::EC2::Route
+  #   DependsOn: TGW2WorkshopVPC
+  #   Properties:
+  #     DestinationCidrBlock: 10.26.0.0/16
+  #     TransitGatewayId: !Ref TransitGateway
+  #     RouteTableId: !Ref PrivateRouteTable
+
+  PrivateRouteTableAssociation0:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet0
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+  
+  PrivateRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  AppStreamEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${Namespace}-appstream-eip"
+
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      # PolicyDocument - omit to allow full access
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
+      VpcId: !Ref WorkshopVPC
+
+  WorkshopEndpointSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref WorkshopVPC
+      GroupDescription: Default Workshop VPCE SG
+      SecurityGroupIngress: 
+        - Description: 'Allow All from AWS Environment'
+          IpProtocol: '-1'
+          CidrIp: '10.25.0.0/16'  
+        - Description: 'Allow All from AWS Environment'
+          IpProtocol: '-1'
+          CidrIp: '10.26.0.0/16'  
+        - Description: 'Allow All from AWS Environment'
+          IpProtocol: '-1'
+          CidrIp: '192.168.10.0/21'
+
+  SharedEndpointSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref SharedVPC
+      GroupDescription: Default Shared VPCE SG
+      SecurityGroupIngress: 
+        - Description: 'Allow All from AWS Environment'
+          IpProtocol: '-1'
+          CidrIp: '10.25.0.0/16'  
+        - Description: 'Allow All from AWS Environment'
+          IpProtocol: '-1'
+          CidrIp: '10.26.0.0/16'  
+        - Description: 'Allow All from AWS Environment'
+          IpProtocol: '-1'
+          CidrIp: '192.168.10.0/21'          
+
+  EC2Role:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ssm:DescribeAssociation'
+                  - 'ssm:GetDeployablePatchSnapshotForInstance'
+                  - 'ssm:GetDocument'
+                  - 'ssm:DescribeDocument'
+                  - 'ssm:GetManifest'
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                  - 'ssm:ListAssociations'
+                  - 'ssm:ListInstanceAssociations'
+                  - 'ssm:PutInventory'
+                  - 'ssm:PutComplianceItems'
+                  - 'ssm:PutConfigurePackageResult'
+                  - 'ssm:UpdateAssociationStatus'
+                  - 'ssm:UpdateInstanceAssociationStatus'
+                  - 'ssm:UpdateInstanceInformation'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'ssmmessages:CreateControlChannel'
+                  - 'ssmmessages:CreateDataChannel'
+                  - 'ssmmessages:OpenControlChannel'
+                  - 'ssmmessages:OpenDataChannel' 
+                Resource: '*'
+              - Effect: Allow
+                Action: 
+                  - 'ec2messages:AcknowledgeMessage'
+                  - 'ec2messages:DeleteMessage'
+                  - 'ec2messages:FailMessage'
+                  - 'ec2messages:GetEndpoint'
+                  - 'ec2messages:GetMessages'
+                  - 'ec2messages:SendReply'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'sns:*'
+                Resource: '*'
+
+  EC2InstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2Role
+
+  WorkshopVPCS3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      # PolicyDocument - omit to allow full access
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
+      VpcId: !Ref WorkshopVPC
+
+  WorkshopVPCSSMEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: True
+      SubnetIds:
+        - !Ref PrivateSubnet0
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+       - !Ref WorkshopEndpointSG
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      VpcId: !Ref WorkshopVPC
+
+  WorkshopVPCEC2MsgEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: True
+      SubnetIds:
+        - !Ref PrivateSubnet0
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+       - !Ref WorkshopEndpointSG
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      VpcId: !Ref WorkshopVPC
+
+  WorkshopVPCSSMMsgEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: True
+      SubnetIds:
+        - !Ref PrivateSubnet0
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+       - !Ref WorkshopEndpointSG
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      VpcId: !Ref WorkshopVPC
+
+  SharedVPCSSMEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: True
+      SubnetIds:
+        - !Ref SharedPrivateSubnet0
+        - !Ref SharedPrivateSubnet1
+      SecurityGroupIds:
+       - !Ref SharedEndpointSG
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      VpcId: !Ref SharedVPC
+
+  SharedVPCEC2MsgEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: True
+      SubnetIds:
+        - !Ref SharedPrivateSubnet0
+        - !Ref SharedPrivateSubnet1
+      SecurityGroupIds:
+       - !Ref SharedEndpointSG
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      VpcId: !Ref SharedVPC
+
+  SharedVPCSSMMsgEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: True
+      SubnetIds:
+        - !Ref SharedPrivateSubnet0
+        - !Ref SharedPrivateSubnet1
+      SecurityGroupIds:
+       - !Ref SharedEndpointSG
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      VpcId: !Ref SharedVPC
+
+  # Should I use the AD Connector IPs here instead?
+  ADDHCPOptions:
+    Type: AWS::EC2::DHCPOptions
+    Properties:
+      DomainNameServers:
+        - 192.168.10.250
+        - 192.168.9.143
+        - 10.25.0.2
+      
+  DhcpOptionsWorkshop:
+    Type: AWS::EC2::VPCDHCPOptionsAssociation
+    Properties:
+      VpcId: !Ref WorkshopVPC
+      DhcpOptionsId: !Ref ADDHCPOptions
+
+# Outputs:
+#   TransitGateway:
+#     Description: "The transit gateway"
+#     Value: !Ref TransitGateway
+#     Export:
+#       Name: !Sub "${AWS::StackName}-tgw"
+
+
+      
+    
+
+  
+
+
+
+
+
+
+  
+
+  
+
